@@ -43,7 +43,7 @@ def consultar():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    options.binary_location = "/opt/render/project/.render/chrome/opt/google/chrome/chrome"
+    options.binary_location = "/opt/render/project/.render/chrome/opt/google/chrome/google-chrome"
     
     try:
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
