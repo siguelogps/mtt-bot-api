@@ -6,6 +6,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import requests
 import time
 import os
+import traceback
 
 app = Flask(__name__)
 
@@ -51,7 +52,7 @@ def consultar():
 
         img_element = driver.find_element(By.XPATH, "//img[contains(@src, 'base64')]")
         texto_captcha = resolver_captcha(img_element.screenshot_as_base64)
-        if not texto_captcha: raise Exception("Fallo resolución CAPTCHA")
+        if not texto_captcha: raise Exception("Fallo resolución CAPTCHA. Revisa tu saldo o API KEY.")
 
         driver.find_element(By.ID, "patente").send_keys(patente)
         driver.find_element(By.ID, "captcha_response").send_keys(texto_captcha)
@@ -64,8 +65,11 @@ def consultar():
         return jsonify({"patente": patente, "resultado": resultado, "exito": True})
         
     except Exception as e:
+        print("🚨 EXPLOSIÓN INTERNA:")
+        traceback.print_exc()
         if 'driver' in locals(): driver.quit()
-        return jsonify({"error": str(e), "exito": False}), 500
+        # Cambiamos a status 200 para que Node.js no oculte el error y lo veas en la pantalla de tu compu
+        return jsonify({"error": str(e), "exito": False}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
