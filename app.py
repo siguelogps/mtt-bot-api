@@ -9,7 +9,7 @@ import os
 
 app = Flask(__name__)
 
-# Tu API KEY real de 2Captcha va aquí
+# Tu API KEY de 2Captcha
 API_KEY_2CAPTCHA = os.environ.get('API_KEY_2CAPTCHA', 'bc98524218c99fabc1ed5991aa984b38')
 
 def resolver_captcha(base64_img):
@@ -36,14 +36,12 @@ def consultar():
     if not patente:
         return jsonify({"error": "Falta la patente"}), 400
 
-print(f"Buscando patente: {patente}")
+    print(f"Buscando patente: {patente}")
+    
     options = webdriver.ChromeOptions()
-    options.add_argument('--headless') # Modo fantasma activado
+    options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    options.binary_location = "/opt/render/project/.render/chrome/opt/google/chrome/chrome"
-    
-    # Le decimos a Selenium dónde está el Chrome que descargamos en Render
     options.binary_location = "/opt/render/project/.render/chrome/opt/google/chrome/chrome"
     
     try:
@@ -70,5 +68,4 @@ print(f"Buscando patente: {patente}")
         return jsonify({"error": str(e), "exito": False}), 500
 
 if __name__ == '__main__':
-    # El bot vivirá en el puerto 5000
     app.run(host='0.0.0.0', port=5000)
