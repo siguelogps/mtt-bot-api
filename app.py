@@ -36,11 +36,12 @@ def consultar():
     if not patente:
         return jsonify({"error": "Falta la patente"}), 400
 
-    print(f"Buscando patente: {patente}")
-options = webdriver.ChromeOptions()
+print(f"Buscando patente: {patente}")
+    options = webdriver.ChromeOptions()
     options.add_argument('--headless') # Modo fantasma activado
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    options.binary_location = "/opt/render/project/.render/chrome/opt/google/chrome/chrome"
     
     # Le decimos a Selenium dónde está el Chrome que descargamos en Render
     options.binary_location = "/opt/render/project/.render/chrome/opt/google/chrome/chrome"
