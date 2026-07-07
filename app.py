@@ -40,14 +40,15 @@ def consultar():
     print(f"Buscando patente: {patente}")
     
     options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
+    options.add_argument('--headless=new') # El nuevo modo fantasma ultra sigiloso
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--disable-gpu')
-    options.binary_location = "/opt/render/project/.render/chrome/opt/google/chrome/chrome"
     
+    # 💥 LA MAGIA: Quitamos la ruta manual y el Service. 
+    # Selenium descargará su propio Chrome automáticamente.
     try:
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        driver = webdriver.Chrome(options=options)
         driver.get("http://rrvv.fiscalizacion.cl/")
         time.sleep(3)
 
