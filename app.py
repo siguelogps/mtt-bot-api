@@ -10,6 +10,12 @@ import traceback
 
 app = Flask(__name__)
 
+# --- AGREGA ESTE BLOQUE ---
+@app.route('/', methods=['GET', 'HEAD'])
+def index():
+    return "El Bot del MTT está vivito y coleando 🤖💚", 200
+# -------------------------
+
 # Tu API KEY de 2Captcha
 API_KEY_2CAPTCHA = os.environ.get('API_KEY_2CAPTCHA', 'bc98524218c99fabc1ed5991aa984b38')
 
