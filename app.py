@@ -100,13 +100,29 @@ def consultar():
                             "juzgado": columnas[3].text.strip()
                         })
             
-            # Buscar botón Siguiente para atrapar las que están en la página 2, 3, etc.
+            # LÓGICA DE PAGINACIÓN INTELIGENTE (Leyendo "Página X de Y")
             try:
-                btn_siguiente = driver.find_element(By.XPATH, "//a[contains(text(), '>>') or contains(text(), 'Siguiente')]")
-                btn_siguiente.click()
-                time.sleep(5) # Esperar que cargue la nueva página
+                # Buscamos la fila que contiene la palabra "Página"
+                fila_paginacion = driver.find_element(By.XPATH, "//tr[td[contains(text(), 'Página')]]")
+                texto_paginacion = fila_paginacion.text
+                
+                # Buscamos los números, por ejemplo: "7 resultados - Página 1 de 2"
+                match = re.search(r"Página\s+(\d+)\s+de\s+(\d+)", texto_paginacion, re.IGNORECASE)
+                if match:
+                    pag_actual = int(match.group(1))
+                    pag_total = int(match.group(2))
+                    
+                    if pag_actual < pag_total:
+                        # Si hay más páginas, hacemos clic en el último botón de la derecha
+                        btn_siguiente = fila_paginacion.find_element(By.XPATH, ".//td[last()]//input | .//td[last()]//a | .//td[last()]//img")
+                        btn_siguiente.click()
+                        time.sleep(7)
+                    else:
+                        break # Ya estamos en la última página, salimos.
+                else:
+                    break # No se detectaron los números
             except:
-                break # Si no hay botón, terminamos el bucle
+                break # Si no hay fila de paginación, terminamos.
 
         driver.quit()
         return jsonify({"patente": patente, "multas": multas_extraidas, "total": len(multas_extraidas), "exito": True}), 200
