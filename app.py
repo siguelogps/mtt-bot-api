@@ -55,7 +55,7 @@ def consultar():
     try:
         driver = webdriver.Chrome(options=options)
         driver.get("http://rrvv.fiscalizacion.cl/")
-        time.sleep(3)
+        time.sleep(15)
 
         img_element = driver.find_element(By.XPATH, "//img[contains(@src, 'base64')]")
         texto_captcha = resolver_captcha(img_element.screenshot_as_base64)
