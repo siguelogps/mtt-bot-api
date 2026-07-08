@@ -11,7 +11,7 @@ import traceback
 app = Flask(__name__)
 
 # Tu API KEY de 2Captcha
-API_KEY_2CAPTCHA = os.environ.get('API_KEY_2CAPTCHA', 'bc98524218c99fabc1ed5991aa984b38')
+API_KEY_2CAPTCHA = os.environ.get('API_KEY_2CAPTCHA', 'TU_API_KEY_DE_2CAPTCHA_AQUI')
 
 def resolver_captcha(base64_img):
     print("Enviando imagen a 2Captcha...")
@@ -40,14 +40,12 @@ def consultar():
     print(f"Buscando patente: {patente}")
     
     options = webdriver.ChromeOptions()
-    options.add_argument('--headless=new') # El nuevo modo fantasma ultra sigiloso
+    options.add_argument('--headless=new')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--disable-gpu')
     
-    # 💥 LA MAGIA: Quitamos la ruta manual y el Service. 
-    # Selenium descargará su propio Chrome automáticamente.
-   try:
+    try:
         driver = webdriver.Chrome(options=options)
         driver.get("http://rrvv.fiscalizacion.cl/")
         time.sleep(3)
