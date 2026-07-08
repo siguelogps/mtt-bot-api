@@ -11,7 +11,7 @@ import traceback
 app = Flask(__name__)
 
 # Tu API KEY de 2Captcha
-API_KEY_2CAPTCHA = os.environ.get('API_KEY_2CAPTCHA', 'TU_API_KEY_DE_2CAPTCHA_AQUI')
+API_KEY_2CAPTCHA = os.environ.get('API_KEY_2CAPTCHA', 'bc98524218c99fabc1ed5991aa984b38')
 
 def resolver_captcha(base64_img):
     print("Enviando imagen a 2Captcha...")
