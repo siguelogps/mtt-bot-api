@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # 👈 1. IMPORTAMOS CORS AQUÍ
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -9,12 +10,12 @@ import os
 import traceback
 
 app = Flask(__name__)
+CORS(app)  # 👈 2. LE DAMOS EL PASE VIP A LA APP
 
-# --- AGREGA ESTE BLOQUE ---
+# --- RUTA PARA QUE RENDER NO LLORE CON EL 404 ---
 @app.route('/', methods=['GET', 'HEAD'])
 def index():
     return "El Bot del MTT está vivito y coleando 🤖💚", 200
-# -------------------------
 
 # Tu API KEY de 2Captcha
 API_KEY_2CAPTCHA = os.environ.get('API_KEY_2CAPTCHA', 'bc98524218c99fabc1ed5991aa984b38')
