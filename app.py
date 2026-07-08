@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS  # 👈 1. IMPORTAMOS CORS AQUÍ
+from flask_cors import CORS
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -10,9 +10,8 @@ import os
 import traceback
 
 app = Flask(__name__)
-CORS(app)  # 👈 2. LE DAMOS EL PASE VIP A LA APP
+CORS(app)
 
-# --- RUTA PARA QUE RENDER NO LLORE CON EL 404 ---
 @app.route('/', methods=['GET', 'HEAD'])
 def index():
     return "El Bot del MTT está vivito y coleando 🤖💚", 200
@@ -55,7 +54,7 @@ def consultar():
     try:
         driver = webdriver.Chrome(options=options)
         driver.get("http://rrvv.fiscalizacion.cl/")
-        time.sleep(15)
+        time.sleep(3)
 
         img_element = driver.find_element(By.XPATH, "//img[contains(@src, 'base64')]")
         texto_captcha = resolver_captcha(img_element.screenshot_as_base64)
@@ -64,37 +63,44 @@ def consultar():
         driver.find_element(By.ID, "patente").send_keys(patente)
         driver.find_element(By.ID, "captcha_response").send_keys(texto_captcha)
         driver.find_element(By.ID, "bBuscarPatente").click()
-        time.sleep(5)
+        
+        # Le damos 10 segundos extra para asegurar que el Estado cargue la página
+        time.sleep(10) 
 
         texto_general = driver.find_element(By.ID, "containerResult").text.lower()
         
-        # 1. CASO FELIZ: No hay multas
         if "no presenta infracciones" in texto_general or "no se encontraron" in texto_general:
             driver.quit()
             return jsonify({"patente": patente, "multas": [], "total": 0, "exito": True}), 200
 
-        # 2. CASO ALERTA: Hay multas. Vamos a raspar la tabla y buscar la paginación.
         multas_extraidas = []
         
         while True:
-            # Extraemos las filas de la tabla de resultados (saltando la cabecera)
             filas = driver.find_elements(By.XPATH, "//div[@id='containerResult']//table//tr")
-            for fila in filas[1:]:
+            for fila in filas:
                 columnas = fila.find_elements(By.TAG_NAME, "td")
-                if len(columnas) >= 3:
+                
+                # FILTRO ESTRICTO: Solo filas con 4 columnas exactas (descartamos títulos y pie de página)
+                if len(columnas) >= 4:
+                    texto_fecha = columnas[0].text.strip()
+                    
+                    # Evitamos capturar la cabecera en caso de que esté usando <td> en vez de <th>
+                    if "Fecha" in texto_fecha:
+                        continue
+                        
                     multas_extraidas.append({
-                        "fecha": columnas[0].text.strip(),
-                        "motivo": columnas[1].text.strip(),
-                        "juzgado": columnas[2].text.strip()
+                        "fecha": texto_fecha,
+                        "lugar": columnas[1].text.strip(),
+                        "motivo": columnas[2].text.strip(),
+                        "juzgado": columnas[3].text.strip()
                     })
             
-            # Buscamos el botón de Siguiente Página (usualmente un link con '>>' o la palabra 'Siguiente')
             try:
                 btn_siguiente = driver.find_element(By.XPATH, "//a[contains(text(), '>>') or contains(text(), 'Siguiente')]")
                 btn_siguiente.click()
-                time.sleep(3) # Esperamos a que cargue la nueva página
+                time.sleep(5)
             except:
-                break # Si no hay botón de siguiente, salimos del bucle
+                break 
 
         driver.quit()
         return jsonify({"patente": patente, "multas": multas_extraidas, "total": len(multas_extraidas), "exito": True}), 200
