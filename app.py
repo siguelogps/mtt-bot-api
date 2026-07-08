@@ -8,16 +8,18 @@ import requests
 import time
 import os
 import traceback
+import re  # La librería para detectar patrones (nuestro escudo anti-fantasmas)
 
 app = Flask(__name__)
-CORS(app)
+CORS(app) # Permite que tu panel de Síguelo OS hable con el bot
 
+# --- RUTA PARA QUE RENDER NO LLORE CON EL 404 ---
 @app.route('/', methods=['GET', 'HEAD'])
 def index():
     return "El Bot del MTT está vivito y coleando 🤖💚", 200
 
 # Tu API KEY de 2Captcha
-API_KEY_2CAPTCHA = os.environ.get('API_KEY_2CAPTCHA', 'bc98524218c99fabc1ed5991aa984b38')
+API_KEY_2CAPTCHA = os.environ.get('API_KEY_2CAPTCHA', 'TU_API_KEY_DE_2CAPTCHA_AQUI')
 
 def resolver_captcha(base64_img):
     print("Enviando imagen a 2Captcha...")
@@ -56,10 +58,12 @@ def consultar():
         driver.get("http://rrvv.fiscalizacion.cl/")
         time.sleep(3)
 
+        # Buscar y resolver CAPTCHA
         img_element = driver.find_element(By.XPATH, "//img[contains(@src, 'base64')]")
         texto_captcha = resolver_captcha(img_element.screenshot_as_base64)
         if not texto_captcha: raise Exception("Fallo resolución CAPTCHA. Revisa tu saldo o API KEY.")
 
+        # Llenar formulario
         driver.find_element(By.ID, "patente").send_keys(patente)
         driver.find_element(By.ID, "captcha_response").send_keys(texto_captcha)
         driver.find_element(By.ID, "bBuscarPatente").click()
@@ -69,10 +73,12 @@ def consultar():
 
         texto_general = driver.find_element(By.ID, "containerResult").text.lower()
         
+        # 1. CASO FELIZ: No hay multas
         if "no presenta infracciones" in texto_general or "no se encontraron" in texto_general:
             driver.quit()
             return jsonify({"patente": patente, "multas": [], "total": 0, "exito": True}), 200
 
+        # 2. CASO ALERTA: Hay multas. Vamos a raspar la tabla.
         multas_extraidas = []
         
         while True:
@@ -80,27 +86,27 @@ def consultar():
             for fila in filas:
                 columnas = fila.find_elements(By.TAG_NAME, "td")
                 
-                # FILTRO ESTRICTO: Solo filas con 4 columnas exactas (descartamos títulos y pie de página)
+                # FILTRO ESTRICTO: Solo filas con 4 columnas exactas
                 if len(columnas) >= 4:
                     texto_fecha = columnas[0].text.strip()
                     
-                    # Evitamos capturar la cabecera en caso de que esté usando <td> en vez de <th>
-                    if "Fecha" in texto_fecha:
-                        continue
-                        
-                    multas_extraidas.append({
-                        "fecha": texto_fecha,
-                        "lugar": columnas[1].text.strip(),
-                        "motivo": columnas[2].text.strip(),
-                        "juzgado": columnas[3].text.strip()
-                    })
+                    # EL FILTRO DEFINITIVO: Validar que sea una fecha formato DD-MM-YYYY
+                    # Esto ignora encabezados, pies de página o filas invisibles
+                    if re.match(r"^\d{2}-\d{2}-\d{4}$", texto_fecha):
+                        multas_extraidas.append({
+                            "fecha": texto_fecha,
+                            "lugar": columnas[1].text.strip(),
+                            "motivo": columnas[2].text.strip(),
+                            "juzgado": columnas[3].text.strip()
+                        })
             
+            # Buscar botón Siguiente para atrapar las que están en la página 2, 3, etc.
             try:
                 btn_siguiente = driver.find_element(By.XPATH, "//a[contains(text(), '>>') or contains(text(), 'Siguiente')]")
                 btn_siguiente.click()
-                time.sleep(5)
+                time.sleep(5) # Esperar que cargue la nueva página
             except:
-                break 
+                break # Si no hay botón, terminamos el bucle
 
         driver.quit()
         return jsonify({"patente": patente, "multas": multas_extraidas, "total": len(multas_extraidas), "exito": True}), 200
